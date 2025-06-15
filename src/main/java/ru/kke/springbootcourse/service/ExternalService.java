@@ -1,7 +1,9 @@
 package ru.kke.springbootcourse.service;
 
+import ru.kke.springbootcourse.model.ExternalInfo;
+
 public interface ExternalService {
 
-    String getInfo();
+    ExternalInfo getInfo();
 
 }
