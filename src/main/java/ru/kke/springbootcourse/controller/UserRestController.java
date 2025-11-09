@@ -1,9 +1,12 @@
 package ru.kke.springbootcourse.controller;
 
 import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
 
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,7 +33,12 @@ public class UserRestController {
 
     @GetMapping("/{id}")
     ResponseEntity<UserDto> getUserById(@PathVariable Integer id) {
-        return ResponseEntity.ok(userService.getUserById(id));
+        UserDto user = userService.getUserById(id);
+        ResponseCookie userId = ResponseCookie.from("userId", user.id().toString()).maxAge(600).secure(true).build();
+        return ResponseEntity
+                .status(OK)
+                .header(HttpHeaders.SET_COOKIE, userId.toString())
+                .body(user);
     }
 
     @PostMapping
