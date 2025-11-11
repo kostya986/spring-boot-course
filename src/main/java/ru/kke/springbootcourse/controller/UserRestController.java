@@ -3,11 +3,13 @@ package ru.kke.springbootcourse.controller;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,7 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.kke.springbootcourse.model.UserDto;
 import ru.kke.springbootcourse.service.UserService;
+import ru.kke.springbootcourse.validation.Create;
+import ru.kke.springbootcourse.validation.Update;
 
+@Validated
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/rest/users")
@@ -41,13 +46,15 @@ public class UserRestController {
                 .body(user);
     }
 
+    @Validated(Create.class)
     @PostMapping
-    ResponseEntity<UserDto> createUser(@RequestBody UserDto userDto) {
+    ResponseEntity<UserDto> createUser(@Valid @RequestBody UserDto userDto) {
         return ResponseEntity.status(CREATED).body(userService.createUser(userDto));
     }
 
+    @Validated(Update.class)
     @PutMapping
-    UserDto updateUser(@RequestBody UserDto userDto) {
+    UserDto updateUser(@Valid @RequestBody UserDto userDto) {
         return userService.updateUser(userDto);
     }
 

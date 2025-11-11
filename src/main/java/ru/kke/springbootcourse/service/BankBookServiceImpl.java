@@ -9,11 +9,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 import ru.kke.springbootcourse.model.BankBookDto;
 import ru.kke.springbootcourse.model.exception.BankBookNotFoundException;
 import ru.kke.springbootcourse.model.exception.BankBookNumberCannotBeModifiedException;
 import ru.kke.springbootcourse.model.exception.BankBookWithCurrencyAlreadyHaveException;
 
+@Validated
 @Service
 @RequiredArgsConstructor
 public class BankBookServiceImpl implements BankBookService {
