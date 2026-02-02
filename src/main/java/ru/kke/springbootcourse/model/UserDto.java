@@ -18,5 +18,6 @@ public record UserDto(
         @NotEmpty
         String username,
         @Email
-        String email) {
+        String email,
+        AddressDto address) {
 }
