@@ -1,98 +1,84 @@
 package ru.kke.springbootcourse.service;
 
-import jakarta.annotation.PostConstruct;
-import java.math.BigDecimal;
+import jakarta.transaction.Transactional;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
+import ru.kke.springbootcourse.mapper.BankBookMapper;
 import ru.kke.springbootcourse.model.BankBookDto;
+import ru.kke.springbootcourse.model.entity.BankBookEntity;
+import ru.kke.springbootcourse.model.entity.CurrencyEntity;
 import ru.kke.springbootcourse.model.exception.BankBookNotFoundException;
 import ru.kke.springbootcourse.model.exception.BankBookNumberCannotBeModifiedException;
 import ru.kke.springbootcourse.model.exception.BankBookWithCurrencyAlreadyHaveException;
+import ru.kke.springbootcourse.repository.BankBookRepository;
+import ru.kke.springbootcourse.repository.CurrencyRepository;
 
 @Validated
 @Service
 @RequiredArgsConstructor
 public class BankBookServiceImpl implements BankBookService {
-
-    private final Map<Integer, BankBookDto> repository = new ConcurrentHashMap<>();
-    private final AtomicInteger sequenceId = new AtomicInteger(1);
-
-    @PostConstruct
-    public void init() {
-        repository.put(1, BankBookDto.builder()
-                        .id(sequenceId.getAndIncrement())
-                        .userId(1)
-                        .amount(BigDecimal.TEN)
-                        .currency("RUB")
-                        .number("num1").build());
-    }
+    private final BankBookRepository bankBookRepository;
+    private final BankBookMapper bankBookMapper;
+    private final CurrencyRepository currencyRepository;
 
     @Override
     public BankBookDto get(int id) {
-        return Optional.ofNullable(repository.get(id))
+        return bankBookRepository.findById(id)
+                .map(bankBookMapper::toDto)
                 .orElseThrow(() -> new BankBookNotFoundException("BankBook not found by id: " + id));
     }
 
     @Override
     public List<BankBookDto> getByUserId(int userId) {
-        return repository.values()
-                .stream()
-                .filter(b -> b.userId() == userId)
-                .toList();
+        return bankBookMapper.toDtoList(bankBookRepository.findByUserId(userId));
     }
 
+    @Transactional
     @Override
     public BankBookDto create(BankBookDto bankBookDto) {
-        boolean hasBankBook = repository.values().stream()
-                .anyMatch(dto -> dto.userId() == bankBookDto.userId()
-                && dto.number().equals(bankBookDto.number())
-                && dto.currency().equals(bankBookDto.currency()));
+        boolean hasBankBook = bankBookRepository.findAll().stream()
+                .anyMatch(entity -> entity.getId() == bankBookDto.userId()
+                && entity.getNumber().equals(bankBookDto.number())
+                && entity.getCurrency().getName().equals(bankBookDto.currency()));
         if (hasBankBook) {
             throw new BankBookWithCurrencyAlreadyHaveException("BankBook with userid: " + bankBookDto.userId()
                     + " and number: " + bankBookDto.number() + " and currency: " + bankBookDto.currency() +
                     " already exists");
         }
-        int id = sequenceId.getAndIncrement();
-        BankBookDto bankBook = BankBookDto.builder().id(id).userId(bankBookDto.userId()).number(bankBookDto.number())
-                .currency(bankBookDto.currency()).amount(bankBookDto.amount()).build();
-        repository.put(id, bankBook);
-        return bankBook;
+        CurrencyEntity currency = currencyRepository.findByName(bankBookDto.currency()).orElseGet(() ->
+                currencyRepository.save(new CurrencyEntity().setName(bankBookDto.currency())));
+        return Optional.of(bankBookDto)
+                .map(bankBookMapper::toEntity)
+                .map(b -> bankBookRepository.save(b.setCurrency(currency)))
+                .map(bankBookMapper::toDto)
+                .orElseThrow();
     }
 
+    @Transactional
     @Override
     public BankBookDto update(BankBookDto bankBookDto) {
-        BankBookDto bankBook = repository.get(bankBookDto.id());
+        BankBookEntity bankBook = bankBookRepository.findById(bankBookDto.id()).orElse(null);
         if (bankBook != null) {
-            if (bankBook.number().equals(bankBookDto.number())) {
-                BankBookDto newBankBook = BankBookDto.builder().id(bankBookDto.id())
-                        .userId(bankBookDto.userId())
-                        .amount(bankBookDto.amount())
-                        .currency(bankBookDto.currency())
-                        .number(bankBookDto.number()).build();
-                repository.put(bankBook.id(), newBankBook);
-                return newBankBook;
+            if (bankBook.getNumber().equals(bankBookDto.number())) {
+                return bankBookMapper.toDto(bankBookRepository.save(bankBook
+                        .setAmount(bankBookDto.amount())
+                        .setNumber(bankBookDto.number())));
             } else {
                 throw new BankBookNumberCannotBeModifiedException("BankBook number: " + bankBookDto.number() + " cannot be modified");
             }
         }
-        int id = sequenceId.getAndIncrement();
-        BankBookDto newBankBook = BankBookDto.builder().id(id)
-                .userId(bankBookDto.userId())
-                .amount(bankBookDto.amount())
-                .currency(bankBookDto.currency())
-                .number(bankBookDto.number()).build();
-        repository.put(id, newBankBook);
-        return newBankBook;
+        return Optional.of(bankBookDto)
+                .map(bankBookMapper::toEntity)
+                .map(bankBookRepository::save)
+                .map(bankBookMapper::toDto)
+                .orElseThrow();
     }
 
     @Override
     public void delete(int id) {
-        repository.remove(id);
+        bankBookRepository.deleteById(id);
     }
 }

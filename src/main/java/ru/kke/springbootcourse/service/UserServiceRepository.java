@@ -32,11 +32,12 @@ public class UserServiceRepository implements UserService {
 
     @Override
     public UserDto getUserById(Integer id) {
-        //return userMapper.toDto(userRepository.findById(id).orElse(null));
         UserEntity user = userRepository.findById(id).orElse(null);
         log.info("user from repo {}", user);
         AddressEntity address = user.getAddress();
         log.info("user from address {}", address.getUser());
+
+        log.info("groups from user ={}", user.getGroups());
         return userMapper.toDto(user);
     }
 

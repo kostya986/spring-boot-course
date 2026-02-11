@@ -2,14 +2,16 @@ package ru.kke.springbootcourse.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
-import java.util.Set;
+import lombok.RequiredArgsConstructor;
+import ru.kke.springbootcourse.repository.CurrencyRepository;
 
+@RequiredArgsConstructor
 public class CurrencyValidator implements ConstraintValidator<Currency, String> {
 
-    private static final Set<String> CURRENCY_CODES = Set.of("RUB", "EUR", "USD", "GBP");
+    private final CurrencyRepository currencyRepository;
 
     @Override
     public boolean isValid(String s, ConstraintValidatorContext constraintValidatorContext) {
-        return CURRENCY_CODES.contains(s);
+        return currencyRepository.findByName(s).isPresent();
     }
 }
