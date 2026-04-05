@@ -38,14 +38,23 @@ public class UserServiceRepository implements UserService {
         log.info("user from address {}", address.getUser());
 
         log.info("groups from user ={}", user.getGroups());
+        user = userRepository.findById(id).orElse(null);
         return userMapper.toDto(user);
     }
 
     @Override
     public UserDto createUser(UserDto userDto) {
         return Optional.of(userDto)
-                .map(userMapper::toEntity)
-                .map(userRepository::save)
+                .map(u -> {
+                    log.info("user from repo before save {}", u);
+                    return userMapper.toEntity(userDto);
+                })
+                .map(u -> {
+                    UserEntity user = userRepository.save(u);
+                    log.info("user from repo after save {}", user);
+                    return user;
+
+                })
                 .map(userMapper::toDto)
                 .orElseThrow(() -> new RuntimeException("user create error!"));
     }
@@ -63,6 +72,9 @@ public class UserServiceRepository implements UserService {
 
     @Override
     public void deleteUser(Integer id) {
-        userRepository.deleteById(id);
+        UserEntity user = userRepository.findById(id).orElseThrow(() -> new RuntimeException("user not found!"));
+        log.info("user from repo before delete {}", user);
+        userRepository.delete(user);
+        log.info("user from repo after delete {}", user);
     }
 }

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="init-ad-schema" author="ke.korkin">
+        <sql>
+            create schema ad;
+        </sql>
+    </changeSet>
+    
+    <changeSet id="create-ad-address-id-seq" author="ke.korkin">
+        <createSequence sequenceName="address_id_seq" schemaName="ad"/>
+    </changeSet>
+    
+    <changeSet id="create-ad-address-table" author="ke.korkin">
+        <createTable tableName="address" schemaName="ad">
+            <column name="id" type="integer" defaultValueComputed="nextval('ad.address_id_seq')">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="country" type="varchar"/>
+            <column name="city" type="varchar"/>
+            <column name="street" type="varchar"/>
+            <column name="home" type="varchar"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-ad-users-id-seq" author="ke.korkin">
+        <createSequence sequenceName="user_id_seq" schemaName="ad"/>
+    </changeSet>
+
+    <changeSet id="create-ad-users-table" author="ke.korkin">
+        <createTable tableName="users" schemaName="ad">
+            <column name="id" type="integer" defaultValueComputed="nextval('ad.user_id_seq')">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="email" type="varchar"/>
+            <column name="address_id" type="integer">
+                <constraints foreignKeyName="users_address_fk" references="ad.address(id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="init-dict-schema" author="ke.korkin">
+        <sql>
+            create schema dict;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create-dict-currency-id-seq" author="ke.korkin">
+        <createSequence sequenceName="currency_id_seq" schemaName="dict"/>
+    </changeSet>
+
+    <changeSet id="create-dict-currency-table" author="ke.korkin">
+        <createTable tableName="currency" schemaName="dict">
+            <column name="id" type="integer" defaultValueComputed="nextval('dict.currency_id_seq')">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="insert-dict-currency" author="ke.korkin">
+        <insert tableName="currency" schemaName="dict">
+            <column name="name">USD</column>
+        </insert>
+        <insert tableName="currency" schemaName="dict">
+            <column name="name">EUR</column>
+        </insert>
+        <insert tableName="currency" schemaName="dict">
+            <column name="name">RUB</column>
+        </insert>
+        <insert tableName="currency" schemaName="dict">
+            <column name="name">GPB</column>
+        </insert>
+    </changeSet>
+
+
+    <changeSet id="init-bank-schema" author="ke.korkin">
+        <sql>
+            create schema bank;
+        </sql>
+    </changeSet>
+
+    <changeSet id="create-bank-bank-book-id-seq" author="ke.korkin">
+        <createSequence sequenceName="bank_book_id_seq" schemaName="bank"/>
+    </changeSet>
+
+    <changeSet id="create-bank-bank-book-table" author="ke.korkin">
+        <createTable tableName="bank_book" schemaName="bank">
+            <column name="id" type="integer" defaultValueComputed="nextval('bank.bank_book_id_seq')">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="user_id" type="integer">
+                <constraints foreignKeyName="bank_book_users_fk" references="ad.users(id)" nullable="false"/>
+            </column>
+            <column name="number" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+            <column name="amount" type="numeric">
+                <constraints nullable="false"/>
+            </column>
+            <column name="currency_id" type="integer">
+                <constraints foreignKeyName="bank_book_currency_fk" references="dict.currency(id)" nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="create-ad-group-id-seq" author="ke.korkin">
+        <createSequence sequenceName="group_id_seq" schemaName="ad"/>
+    </changeSet>
+
+    <changeSet id="create-ad-groups-table" author="ke.korkin">
+        <createTable tableName="groups" schemaName="ad">
+            <column name="id" type="integer" defaultValueComputed="nextval('ad.group_id_seq')">
+                <constraints primaryKey="true" nullable="false" unique="true"/>
+            </column>
+            <column name="name" type="varchar">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="create-ad-users-groups-table" author="ke.korkin">
+        <createTable tableName="users_groups" schemaName="ad">
+            <column name="user_id" type="integer">
+                <constraints foreignKeyName="users_groups_user_fk" references="ad.users(id)" nullable="false"/>
+            </column>
+            <column name="group_id" type="integer">
+                <constraints foreignKeyName="users_groups_group_fk" references="ad.groups(id)" nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="ad" tableName="users_groups" columnNames="user_id, group_id"/>
+    </changeSet>
+
+</databaseChangeLog>
